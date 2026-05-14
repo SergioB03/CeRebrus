@@ -21,93 +21,260 @@ load_dotenv()
 
 # ─────────────────────────────────────────────
 # MOCK DATA LAYER
+# Designed to reflect enterprise scale:
+# multi-region customers, diverse tiers, cross-department policies
 # In production: replace with real vector DB (Pinecone, Weaviate)
-# and CRM API (Salesforce, HubSpot) calls
+# and CRM/ERP API (Salesforce, SAP, HubSpot) integrations
 # ─────────────────────────────────────────────
 
 POLICY_DOCS = {
+
+    # ── CUSTOMER-FACING POLICIES ──────────────────────────────────────────
     "return_policy": {
-        "title": "Return & Refund Policy v2.3",
+        "title": "Return & Refund Policy v2.3 — Enterprise Standard",
         "content": (
-            "Standard return window is 30 days with receipt. Electronics have a 15-day return window. "
-            "Items purchased during promotional events are eligible for store credit only, not cash refunds. "
-            "Opened software, digital downloads, and personalized items are non-returnable. "
-            "Manager override required for returns exceeding $500."
+            "Standard return window is 30 days with receipt across all store locations and online orders. "
+            "Electronics have a 15-day return window. Appliances have a 48-hour defect return window. "
+            "Items purchased during promotional events (including Black Friday, Cyber Monday, clearance) "
+            "are eligible for store credit only — no cash refunds. "
+            "Opened software, digital downloads, gift cards, and personalized items are non-returnable. "
+            "Damaged or defective items are eligible for full refund or replacement regardless of window. "
+            "Manager override required for returns exceeding $500. District manager approval for $1,000+. "
+            "Online returns ship free via prepaid label. In-store returns accepted at any location nationwide."
         ),
         "last_updated": "2025-11-01"
     },
+
+    "loyalty_program": {
+        "title": "Loyalty & Rewards Program — Tier Guidelines v3.1",
+        "content": (
+            "Four membership tiers: Standard (0–$999 annual spend), Silver ($1,000–$4,999), "
+            "Gold ($5,000–$19,999), Platinum ($20,000+). "
+            "Points accrual: 1 point per $1 Standard; 1.5x Silver; 2x Gold; 3x Platinum. "
+            "Points expire after 18 months of account inactivity. "
+            "Platinum members receive: dedicated support line, free expedited shipping, "
+            "early access to sales (48 hours), annual $200 rewards credit, and assigned account manager. "
+            "Gold members receive: free standard shipping, early access to sales (24 hours), "
+            "and priority support queue. "
+            "Tier downgrades occur annually on the account anniversary date if spend thresholds are not met. "
+            "Corporate/business accounts qualify for separate contract pricing — contact B2B team."
+        ),
+        "last_updated": "2026-01-15"
+    },
+
+    "price_match": {
+        "title": "Price Match & Competitive Pricing Policy v1.6",
+        "content": (
+            "Price match honored for identical items (same brand, model, SKU) from major national retailers "
+            "including Amazon, Best Buy, Target, Walmart, and Costco. "
+            "Price match must be requested at time of purchase or within 14 days of purchase. "
+            "Excludes: marketplace third-party sellers, open-box/refurbished items, clearance pricing, "
+            "membership-only prices, and limited flash sales. "
+            "Online price match: submit via customer portal with competitor URL. "
+            "In-store: rep verifies live pricing on store device before approving. "
+            "Price match cap: $2,500 per transaction. Manager approval required above $500."
+        ),
+        "last_updated": "2025-09-10"
+    },
+
+    # ── OPERATIONS & VENDOR POLICIES ─────────────────────────────────────
     "vendor_terms": {
         "title": "Vendor Agreement — TechSupply Co. (Contract #VS-2024-089)",
         "content": (
             "Net-30 payment terms. Minimum order quantity: 500 units per SKU. "
-            "Price lock guaranteed through Q3 2026. Penalty clause: 2% per week for late payments beyond 45 days. "
+            "Price lock guaranteed through Q3 2026. "
+            "Penalty clause: 2% per week for late payments beyond 45 days. "
             "Renewal date: September 1, 2026. Exclusive distribution rights for Southeast region. "
-            "SLA: 98% on-time delivery or vendor absorbs shipping cost differential."
+            "SLA: 98% on-time delivery or vendor absorbs shipping cost differential. "
+            "Product defect rate threshold: 1.5% — vendor liable for replacement costs above threshold. "
+            "Annual renegotiation window: July 1–August 15. Volume discount tiers: "
+            "5,000+ units/month = 8% discount; 10,000+ units/month = 14% discount."
         ),
         "last_updated": "2024-09-01"
     },
+
+    "inventory_policy": {
+        "title": "Inventory Management & Replenishment SOP v4.2",
+        "content": (
+            "Automatic reorder triggered when stock falls below 15% of monthly average sales velocity. "
+            "Safety stock minimum: 7 days of average demand for top-100 SKUs; 3 days for all others. "
+            "Markdown triggers: items with 90+ days on shelf automatically flagged for 20% discount review. "
+            "Dead stock (180+ days): escalated to regional merchandising manager for clearance approval. "
+            "Shrinkage threshold: stores exceeding 1.8% shrinkage rate trigger loss prevention audit. "
+            "Seasonal inventory planning cycle begins 16 weeks prior to peak season. "
+            "Cross-store transfers: approved by regional ops manager for quantities above 50 units. "
+            "Out-of-stock customer notification: automated email sent within 2 hours of backorder status."
+        ),
+        "last_updated": "2026-02-28"
+    },
+
+    "shipping_fulfillment": {
+        "title": "Shipping & Fulfillment Standards v2.9",
+        "content": (
+            "Standard shipping: 5–7 business days. Expedited: 2–3 business days. Overnight available on orders placed before 1PM EST. "
+            "Free standard shipping on all orders over $49. "
+            "Same-day delivery available in 42 metro markets via third-party courier partnership. "
+            "Buy Online Pick Up In Store (BOPIS): ready within 2 hours for in-stock items. "
+            "Large item delivery (appliances, furniture): scheduled delivery within 7–14 days; "
+            "white-glove service available for $79 fee. "
+            "International shipping: available to Canada, UK, and Australia. Duties are customer responsibility. "
+            "Lost package threshold: carrier investigation initiated after 5 business days past expected delivery."
+        ),
+        "last_updated": "2025-12-01"
+    },
+
+    # ── COMPLIANCE & EMPLOYEE POLICIES ────────────────────────────────────
     "employee_escalation": {
         "title": "Customer Escalation SOP v1.8",
         "content": (
-            "Tier 1: Front-line rep handles complaints under $200. "
-            "Tier 2: Supervisor approval required for refunds $200–$999. "
+            "Tier 1: Front-line rep handles complaints and refunds under $200. Resolution target: 10 minutes. "
+            "Tier 2: Supervisor approval required for refunds $200–$999 or second-contact complaints. "
             "Tier 3: District manager sign-off for refunds over $1,000 or repeat escalations (3+ contacts). "
-            "All escalations must be logged in CRM within 2 hours. "
-            "VIP customers (Gold/Platinum tier) skip Tier 1 — route directly to Tier 2."
+            "Tier 4: VP Customer Experience for legal threats, media escalations, or corporate account issues. "
+            "All escalations must be logged in CRM within 2 hours with root cause code. "
+            "VIP customers (Gold/Platinum tier) skip Tier 1 — route directly to Tier 2. "
+            "Response SLA by tier: Tier 1 same day; Tier 2 within 4 hours; Tier 3 within 24 hours. "
+            "Goodwill gestures: reps authorized up to $50 store credit without approval; $51–$200 needs supervisor."
         ),
         "last_updated": "2025-06-15"
     },
+
     "compliance": {
-        "title": "Data Privacy & PCI Compliance Guidelines",
+        "title": "Data Privacy, PCI & Security Compliance Guidelines v2.1",
         "content": (
-            "Never store full credit card numbers in CRM notes. Last 4 digits only. "
-            "Customer data requests (CCPA/GDPR) must be fulfilled within 30 days. "
-            "Screen recordings of customer interactions are retained for 90 days. "
-            "PCI DSS Level 1 compliance required for all payment integrations."
+            "Never store full credit card numbers in CRM notes or emails. Last 4 digits only. "
+            "PCI DSS Level 1 compliance required for all payment integrations — annual audit mandatory. "
+            "Customer data requests (CCPA/GDPR): fulfilled within 30 days; deletion requests within 45 days. "
+            "Screen recordings of customer interactions retained for 90 days then auto-deleted. "
+            "Employee access to customer financial data restricted by role-based permissions. "
+            "Data breach protocol: IT Security notified within 1 hour; customers notified within 72 hours per GDPR. "
+            "Biometric data (where collected) stored separately with enhanced encryption (AES-256). "
+            "Third-party vendor data sharing: requires signed DPA (Data Processing Agreement) on file."
         ),
         "last_updated": "2025-03-20"
-    }
+    },
 }
 
 CUSTOMER_DB = {
+
+    # ── PLATINUM TIER ─────────────────────────────────────────────────────
+    "2034": {
+        "name": "Sofia Reyes",
+        "tier": "Platinum",
+        "region": "West Coast",
+        "lifetime_value": 38400.00,
+        "account_since": "2018",
+        "recent_purchases": [
+            {"item": "MacBook Pro 16\"", "amount": 2499.00, "date": "2026-05-01", "status": "delivered"},
+            {"item": "USB-C Hub Bundle", "amount": 89.99, "date": "2026-05-01", "status": "delivered"},
+            {"item": "4K Monitor — Dell UltraSharp", "amount": 749.00, "date": "2026-03-14", "status": "delivered"},
+            {"item": "Ergonomic Chair Pro", "amount": 899.00, "date": "2026-02-20", "status": "delivered"},
+        ],
+        "open_tickets": [],
+        "notes": "Executive buyer for a mid-size tech firm. Bulk purchaser — typically orders 10–20 units. Contract pricing eligible. Prefers dedicated account manager contact. Fast decision-maker."
+    },
+
+    "1105": {
+        "name": "Raymond Okafor",
+        "tier": "Platinum",
+        "region": "Northeast",
+        "lifetime_value": 52100.00,
+        "account_since": "2016",
+        "recent_purchases": [
+            {"item": "Samsung 85\" QLED TV", "amount": 3299.99, "date": "2026-04-30", "status": "delivered"},
+            {"item": "Home Theater Receiver", "amount": 1199.00, "date": "2026-04-30", "status": "delivered"},
+            {"item": "Smart Home Starter Kit", "amount": 499.00, "date": "2026-03-08", "status": "delivered"},
+        ],
+        "open_tickets": [
+            {"id": "TK-8801", "issue": "TV delivery damaged corner of unit — requesting replacement", "status": "in-progress", "created": "2026-05-02"},
+        ],
+        "notes": "Highest LTV customer in Northeast region. Interior designer — buys for clients. Extremely detail-oriented. Has escalated twice historically but resolved positively both times."
+    },
+
+    # ── GOLD TIER ─────────────────────────────────────────────────────────
     "4821": {
         "name": "Marcus Johnson",
         "tier": "Gold",
+        "region": "Southeast",
         "lifetime_value": 14820.50,
+        "account_since": "2019",
         "recent_purchases": [
             {"item": "65-inch OLED TV", "amount": 1899.99, "date": "2026-04-10", "status": "delivered"},
             {"item": "Soundbar Pro X", "amount": 349.99, "date": "2026-03-22", "status": "delivered"},
             {"item": "Extended Warranty Pack", "amount": 199.00, "date": "2026-04-10", "status": "active"},
+            {"item": "Smart Doorbell Camera", "amount": 229.99, "date": "2026-02-14", "status": "delivered"},
         ],
         "open_tickets": [
-            {"id": "TK-9921", "issue": "TV remote not pairing", "status": "open", "created": "2026-04-18"},
+            {"id": "TK-9921", "issue": "TV remote not pairing after firmware update", "status": "open", "created": "2026-04-18"},
         ],
-        "notes": "Loyal customer since 2019. Prefers email communication. Sensitive about wait times."
+        "notes": "Loyal customer since 2019. Prefers email communication. Sensitive about wait times. Strong upsell candidate for smart home ecosystem products."
     },
-    "2034": {
-        "name": "Sofia Reyes",
-        "tier": "Platinum",
-        "lifetime_value": 38400.00,
+
+    "3388": {
+        "name": "Angela Torres",
+        "tier": "Gold",
+        "region": "Midwest",
+        "lifetime_value": 9650.00,
+        "account_since": "2021",
         "recent_purchases": [
-            {"item": "MacBook Pro 16\"", "amount": 2499.00, "date": "2026-05-01", "status": "delivered"},
-            {"item": "USB-C Hub Bundle", "amount": 89.99, "date": "2026-05-01", "status": "delivered"},
+            {"item": "French Door Refrigerator", "amount": 1549.00, "date": "2026-04-22", "status": "delivered"},
+            {"item": "Dishwasher — Bosch 500 Series", "amount": 899.00, "date": "2026-04-22", "status": "delivered"},
+            {"item": "5-Year Appliance Protection Plan", "amount": 299.00, "date": "2026-04-22", "status": "active"},
         ],
-        "open_tickets": [],
-        "notes": "Executive buyer for a mid-size firm. Bulk purchaser. Contract pricing eligible."
+        "open_tickets": [
+            {"id": "TK-9955", "issue": "Refrigerator ice maker not producing ice after 2 weeks", "status": "open", "created": "2026-05-06"},
+        ],
+        "notes": "Recently renovated home — high appliance spend this quarter. Active warranty holder. Likely to purchase washer/dryer next. Respond promptly — appliance issues are high urgency."
     },
+
+    # ── SILVER TIER ───────────────────────────────────────────────────────
+    "5590": {
+        "name": "James Whitfield",
+        "tier": "Silver",
+        "region": "South",
+        "lifetime_value": 3200.00,
+        "account_since": "2022",
+        "recent_purchases": [
+            {"item": "Dyson V15 Vacuum", "amount": 749.99, "date": "2026-05-03", "status": "in-transit"},
+            {"item": "Air Purifier — Levoit 400S", "amount": 219.99, "date": "2026-04-10", "status": "delivered"},
+        ],
+        "open_tickets": [
+            {"id": "TK-9970", "issue": "Vacuum not yet delivered — 4 days past expected date", "status": "open", "created": "2026-05-08"},
+        ],
+        "notes": "Growing account — spend increased 60% YoY. Proactive communicator. Late delivery situation needs immediate attention to preserve loyalty trajectory."
+    },
+
+    # ── STANDARD TIER ─────────────────────────────────────────────────────
     "7710": {
         "name": "Derek Park",
         "tier": "Standard",
+        "region": "West",
         "lifetime_value": 1240.00,
+        "account_since": "2025",
         "recent_purchases": [
             {"item": "Gaming Headset Z", "amount": 129.99, "date": "2026-04-28", "status": "delivered"},
+            {"item": "Controller Charging Dock", "amount": 39.99, "date": "2026-03-10", "status": "delivered"},
         ],
         "open_tickets": [
             {"id": "TK-9988", "issue": "Headset defective — no audio in left ear", "status": "escalated", "created": "2026-05-02"},
             {"id": "TK-9901", "issue": "Return request denied — outside window", "status": "closed", "created": "2026-04-15"},
         ],
-        "notes": "Two escalations in 30 days. Frustrated customer — handle with care."
-    }
+        "notes": "Two escalations in 30 days. Frustrated customer — handle with care. Consider goodwill gesture to prevent churn."
+    },
+
+    "8842": {
+        "name": "Priya Nair",
+        "tier": "Standard",
+        "region": "Northeast",
+        "lifetime_value": 540.00,
+        "account_since": "2026",
+        "recent_purchases": [
+            {"item": "Instant Pot Duo 7-in-1", "amount": 89.99, "date": "2026-05-10", "status": "delivered"},
+            {"item": "Kitchen Scale", "amount": 24.99, "date": "2026-05-10", "status": "delivered"},
+        ],
+        "open_tickets": [],
+        "notes": "New customer — first purchase May 2026. No interaction history. Strong onboarding opportunity. Purchased cookware category — candidate for kitchen appliance cross-sell."
+    },
 }
 
 # ─────────────────────────────────────────────
@@ -128,19 +295,31 @@ def search_knowledge_base(query: str) -> dict:
     q = query.lower()
 
     # Keyword routing — in production this is a vector similarity search
-    if any(w in q for w in ["return", "refund", "exchange", "promo", "promotional"]):
+    if any(w in q for w in ["return", "refund", "exchange", "promo", "promotional", "black friday", "clearance"]):
         doc = POLICY_DOCS["return_policy"]
-    elif any(w in q for w in ["vendor", "supplier", "contract", "payment", "techsupply", "renewal", "penalty"]):
+    elif any(w in q for w in ["loyalty", "rewards", "points", "tier", "platinum", "gold", "silver", "membership", "perks"]):
+        doc = POLICY_DOCS["loyalty_program"]
+    elif any(w in q for w in ["price match", "competitor", "beat", "lower price"]):
+        doc = POLICY_DOCS["price_match"]
+    elif any(w in q for w in ["vendor", "supplier", "contract", "techsupply", "renewal", "penalty", "net-30"]):
         doc = POLICY_DOCS["vendor_terms"]
-    elif any(w in q for w in ["escalat", "tier", "supervisor", "manager", "complaint", "override"]):
+    elif any(w in q for w in ["inventory", "reorder", "stock", "replenish", "shrinkage", "markdown", "dead stock"]):
+        doc = POLICY_DOCS["inventory_policy"]
+    elif any(w in q for w in ["ship", "shipping", "delivery", "fulfillment", "bopis", "pickup", "transit"]):
+        doc = POLICY_DOCS["shipping_fulfillment"]
+    elif any(w in q for w in ["escalat", "supervisor", "manager", "complaint", "override", "goodwill", "sop"]):
         doc = POLICY_DOCS["employee_escalation"]
-    elif any(w in q for w in ["privacy", "pci", "gdpr", "ccpa", "compliance", "data", "credit card"]):
+    elif any(w in q for w in ["privacy", "pci", "gdpr", "ccpa", "compliance", "data", "credit card", "breach"]):
         doc = POLICY_DOCS["compliance"]
     else:
         return {
             "found": False,
             "message": "No matching policy found. Try rephrasing or contact your ops manager.",
-            "suggestion": "Available topics: returns, vendor contracts, escalation procedures, compliance"
+            "suggestion": (
+                "Available topics: returns & refunds, loyalty program, price matching, "
+                "vendor contracts, inventory management, shipping & fulfillment, "
+                "escalation procedures, data & compliance"
+            )
         }
 
     return {
