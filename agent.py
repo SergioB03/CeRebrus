@@ -1,7 +1,7 @@
 """
 CeREbrus — Enterprise Retail Intelligence Platform
 lablab.ai Hackathon | Track 2: AI Agents with Google AI Studio
-Powered by Google ADK + Gemini 2.5 Flash
+Powered by Google ADK + Gemini 3 (Pro for reasoning, Flash for retrieval)
 
 "Cerberus in mythology had three heads guarding the gate.
  CeREbrus has three agents guarding your enterprise data."
@@ -21,6 +21,12 @@ from google import genai
 from google.adk.agents import LlmAgent
 
 load_dotenv()
+
+# Model selection — Gemini 3.x preview as of 2026-05.
+# Pro for routing/synthesis (cross-source reasoning), Flash for retrieval roles.
+# Swap in one place if a preview model misbehaves.
+MODEL_REASONING = "gemini-3.1-pro-preview"
+MODEL_FAST = "gemini-3-flash-preview"
 
 EMBEDDING_MODEL = "gemini-embedding-001"
 RAG_MIN_SIMILARITY = 0.55
@@ -528,7 +534,7 @@ def analyze_customer_portfolio(focus: str = "all") -> dict:
 
 knowledge_agent = LlmAgent(
     name="knowledge_base_agent",
-    model="gemini-2.5-flash",
+    model=MODEL_FAST,
     description="Searches internal enterprise knowledge: policies, SOPs, vendor contracts, and compliance docs.",
     instruction="""You are CeREbrus Head 1 — the Knowledge Guardian.
 
@@ -547,7 +553,7 @@ knowledge_agent = LlmAgent(
 
 customer_intel_agent = LlmAgent(
     name="customer_intel_agent",
-    model="gemini-2.5-flash",
+    model=MODEL_FAST,
     description="Retrieves customer profiles including purchase history, support tickets, tier status, and rep notes.",
     instruction="""You are CeREbrus Head 2 — the Customer Intelligence Head.
 
@@ -566,7 +572,7 @@ customer_intel_agent = LlmAgent(
 
 summary_agent = LlmAgent(
     name="summary_agent",
-    model="gemini-2.5-flash",
+    model=MODEL_REASONING,
     description="Generates single-customer briefs AND portfolio-wide synthesis (churn risk, upsell candidates, accounts needing attention).",
     instruction="""You are CeREbrus Head 3 — the Synthesis Head.
 
@@ -600,7 +606,7 @@ summary_agent = LlmAgent(
 
 root_agent = LlmAgent(
     name="cerebrus_orchestrator",
-    model="gemini-2.5-flash",
+    model=MODEL_REASONING,
     description="CeREbrus — Enterprise Retail Intelligence Platform. Three agents, one interface.",
     instruction="""You are CeREbrus — an enterprise retail intelligence platform built for retail operations teams.
 
