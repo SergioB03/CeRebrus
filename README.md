@@ -18,9 +18,9 @@ CeREbrus is a multi-agent RAG system with **three specialist heads** — one int
 
 | Head | Agent | Does |
 |---|---|---|
-| 🧠 Head 1 | **Knowledge Guardian** | Answers policy, SOP, vendor contract, and compliance questions |
+| 🧠 Head 1 | **Knowledge Guardian** | Semantic RAG over policy, SOP, vendor contract, and compliance docs (Gemini embeddings + cosine similarity) |
 | 👤 Head 2 | **Customer Intel** | Retrieves full customer profiles — purchases, tickets, tier, rep notes |
-| 📋 Head 3 | **Synthesis** | Generates pre-interaction briefs combining both sources |
+| 📋 Head 3 | **Synthesis** | Two modes: pre-interaction briefs for one customer, AND portfolio-wide synthesis (churn risk, top upsell candidates, accounts needing attention) |
 
 ---
 
@@ -78,6 +78,14 @@ adk run cerebrus
 "Retention brief for customer 7710"
 ```
 
+**Portfolio synthesis (cross-customer reasoning):**
+```
+"Who are my top 3 churn-risk customers right now and why?"
+"Which high-LTV accounts have unresolved issues this week?"
+"Top upsell candidates I should call today?"
+```
+The synthesis agent reasons across the full customer base in one pass and cites specific signals (LTV, ticket age, escalation count) for each ranked customer — not a hardcoded `WHERE` clause.
+
 ---
 
 ## Project Structure
@@ -91,11 +99,12 @@ cerebrus/
 ```
 
 ## Track Alignment
-- ✅ Multi-agent system using Gemini (three specialist sub-agents)
+- ✅ Multi-agent system using Gemini (orchestrator + three specialist sub-agents)
 - ✅ Internal AI tools / knowledge base ops
-- ✅ Enterprise integrations (CRM + document RAG)
+- ✅ Enterprise integrations (CRM data + real semantic RAG over policy docs)
 - ✅ Agent-driven workflows responding to user input and context
-- ✅ Working prototype with demo-ready UI via `adk web`
+- ✅ Cross-customer reasoning (portfolio synthesis) — not just lookup
+- ✅ Working prototype with custom dashboard UI + ADK dev UI
 
 ---
 
