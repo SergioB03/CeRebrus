@@ -656,6 +656,21 @@
   }
 
   // ─── UI HELPERS ───────────────────────────────────────────
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function renderMarkdown(text) {
+    let html = escapeHtml(text);
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
   function appendMessage(role, text) {
     const messages = document.getElementById('messages');
     const div = document.createElement('div');
@@ -667,7 +682,11 @@
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    bubble.textContent = text;
+    if (role === 'agent') {
+      bubble.innerHTML = renderMarkdown(text);
+    } else {
+      bubble.textContent = text;
+    }
 
     div.appendChild(meta);
     div.appendChild(bubble);
