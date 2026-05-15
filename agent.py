@@ -14,6 +14,7 @@ Architecture:
 """
 
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from google.adk.agents import LlmAgent
 
@@ -414,6 +415,85 @@ def generate_interaction_brief(customer_id: str, interaction_type: str = "suppor
     }
 
 
+def analyze_customer_portfolio(focus: str = "all") -> dict:
+    """
+    Returns the entire customer portfolio with computed signals so the
+    synthesis agent can reason across all customers in one pass —
+    identifying churn risk, upsell candidates, accounts needing immediate
+    attention, or any other cross-cutting pattern.
+
+    Use this tool ONLY for portfolio-wide questions like:
+      "Who's at churn risk?"
+      "Top 3 upsell candidates?"
+      "Which accounts need immediate attention?"
+      "Show me high-value customers with unresolved issues"
+
+    Do NOT use this for single-customer questions — those go to
+    get_customer_profile or generate_interaction_brief.
+
+    Args:
+        focus: Optional analytical lens. One of:
+            "churn_risk" - emphasize at-risk signals
+            "upsell"     - emphasize buying-pattern signals
+            "retention"  - emphasize relationship signals
+            "all"        - balanced view (default)
+
+    Returns:
+        Portfolio-level metrics plus enriched per-customer signals
+        (LTV, recent spend, ticket age, escalation count, days since
+        last purchase) for the agent to reason over.
+    """
+    today = datetime.now().date()
+
+    portfolio = []
+    for cid, c in CUSTOMER_DB.items():
+        open_tickets = c["open_tickets"]
+        escalated = sum(1 for t in open_tickets if t.get("status") == "escalated")
+        in_progress = sum(1 for t in open_tickets if t.get("status") == "in-progress")
+        recent_spend = sum(p["amount"] for p in c["recent_purchases"])
+
+        if c["recent_purchases"]:
+            most_recent_str = max(p["date"] for p in c["recent_purchases"])
+            days_since_purchase = (today - datetime.fromisoformat(most_recent_str).date()).days
+        else:
+            days_since_purchase = None
+
+        if open_tickets:
+            oldest_str = min(t["created"] for t in open_tickets)
+            oldest_ticket_age_days = (today - datetime.fromisoformat(oldest_str).date()).days
+        else:
+            oldest_ticket_age_days = 0
+
+        portfolio.append({
+            "customer_id": cid,
+            "name": c["name"],
+            "tier": c["tier"],
+            "region": c.get("region", "—"),
+            "lifetime_value": c["lifetime_value"],
+            "recent_spend_90d": round(recent_spend, 2),
+            "open_ticket_count": len(open_tickets),
+            "escalated_tickets": escalated,
+            "in_progress_tickets": in_progress,
+            "ticket_topics": [t["issue"] for t in open_tickets],
+            "oldest_open_ticket_days": oldest_ticket_age_days,
+            "days_since_last_purchase": days_since_purchase,
+            "account_since": c.get("account_since", "—"),
+            "rep_notes": c["notes"],
+        })
+
+    portfolio.sort(key=lambda x: x["lifetime_value"], reverse=True)
+
+    return {
+        "as_of": today.isoformat(),
+        "focus": focus,
+        "total_customers": len(portfolio),
+        "total_lifetime_value": round(sum(p["lifetime_value"] for p in portfolio), 2),
+        "customers_with_open_tickets": sum(1 for p in portfolio if p["open_ticket_count"] > 0),
+        "customers_with_escalations": sum(1 for p in portfolio if p["escalated_tickets"] > 0),
+        "portfolio": portfolio,
+    }
+
+
 # ─────────────────────────────────────────────
 # THREE HEADS OF CeREbrus
 # ─────────────────────────────────────────────
@@ -459,19 +539,31 @@ customer_intel_agent = LlmAgent(
 summary_agent = LlmAgent(
     name="summary_agent",
     model="gemini-2.5-flash",
-    description="Generates pre-interaction briefs and cross-source intelligence summaries for retail reps.",
+    description="Generates single-customer briefs AND portfolio-wide synthesis (churn risk, upsell candidates, accounts needing attention).",
     instruction="""You are CeREbrus Head 3 — the Synthesis Head.
 
-    You produce structured briefs that combine customer intelligence with relevant policy context.
+    You handle two distinct kinds of questions:
 
-    When asked for a brief or summary:
-    1. Use generate_interaction_brief with the customer ID and interaction type
-    2. Structure the output clearly: Customer Snapshot → Key Issues → Recommended Approach → Policy Reminders
-    3. Flag any risk signals (frustrated customer, high LTV, VIP tier) at the top
-    4. Keep it under 150 words — reps are reading this before a live call
+    A) SINGLE-CUSTOMER BRIEFS — questions like "Brief me on customer 4821",
+       "Pre-call prep for 7710":
+       1. Use generate_interaction_brief with the customer ID and interaction type
+       2. Structure: Customer Snapshot → Key Issues → Recommended Approach → Policy Reminders
+       3. Flag risk signals (frustrated, high LTV, VIP tier) at the top
+       4. Keep under 150 words
 
-    Tone: decisive, scannable, no fluff. Every word should help the rep.""",
-    tools=[generate_interaction_brief],
+    B) PORTFOLIO-WIDE SYNTHESIS — questions like "Who's at churn risk?",
+       "Top upsell candidates?", "Which accounts need attention this week?",
+       "High-value customers with unresolved issues?":
+       1. Use analyze_customer_portfolio with the appropriate focus
+       2. Reason across the returned signals — DO NOT just list everyone
+       3. Identify the customers that match the question and rank them
+       4. For each ranked customer, cite the specific signals justifying inclusion
+          (e.g. "LTV $52,100, ticket open 12 days, in-progress status")
+       5. Output format: Top 3 with reasoning → optional 1-line tail for the rest
+       6. End with one concrete next action a manager can take today
+
+    Tone: decisive, scannable, no fluff. Every word should help the rep or manager.""",
+    tools=[generate_interaction_brief, analyze_customer_portfolio],
 )
 
 # ─────────────────────────────────────────────
@@ -486,21 +578,26 @@ root_agent = LlmAgent(
 
     You have three specialist agents (three heads):
     1. knowledge_base_agent  — answers questions about internal policies, SOPs, vendor contracts, compliance
-    2. customer_intel_agent  — retrieves customer profiles, purchase history, open tickets, and rep notes
-    3. summary_agent         — generates pre-interaction briefs combining customer data + policy context
+    2. customer_intel_agent  — retrieves single-customer profiles (purchase history, tickets, notes)
+    3. summary_agent         — generates single-customer briefs AND portfolio-wide synthesis
+                                (churn risk, top accounts, who needs attention)
 
     How to route:
     - Policy, SOP, vendor contract, compliance question → knowledge_base_agent
-    - "Tell me about customer [ID]", purchase history, open tickets → customer_intel_agent
-    - "Brief me on customer [ID]", pre-call prep, interaction summary → summary_agent
-    - Ambiguous query combining both policy + customer context → summary_agent
+    - "Tell me about customer [ID]", single-customer profile lookup → customer_intel_agent
+    - "Brief me on customer [ID]", pre-call prep → summary_agent
+    - PORTFOLIO/CROSS-CUSTOMER questions ("who's at churn risk", "top upsell
+      candidates", "which accounts need attention", "high-value customers with
+      open issues", anything spanning multiple customers) → summary_agent
+    - Ambiguous query combining policy + customer context → summary_agent
 
     Rules:
     - Always route to a specialist. Never answer policy or customer questions yourself.
     - If a customer ID is mentioned, extract it and pass it to the correct agent.
-    - If the user seems unsure what to ask, present the three capabilities clearly.
+    - If the user seems unsure what to ask, present the four capabilities clearly:
+      knowledge lookups, single-customer profile, single-customer brief, portfolio synthesis.
 
-    Opening: When greeted, introduce CeREbrus in one sentence and list the three things it can do.
+    Opening: When greeted, introduce CeREbrus in one sentence and list what it can do.
     Tagline: "Three heads. One source of truth." """,
     sub_agents=[knowledge_agent, customer_intel_agent, summary_agent],
 )
