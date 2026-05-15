@@ -225,3 +225,6 @@ __marimo__/
 
 # ADK runtime state (sessions, artifacts)
 .adk/
+
+# Generated dashboard snapshot (regenerated on agent.py import)
+portfolio_snapshot.json

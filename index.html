@@ -4,23 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CeREbrus — Enterprise Retail Intelligence</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     :root {
       --bg-void:       #080808;
       --bg-panel:      #0f0f0f;
-      --bg-card:       #151515;
+      --bg-card:       #131313;
+      --bg-card-hi:    #181818;
       --bg-input:      #1a1a1a;
       --border:        #222222;
+      --border-soft:   #1a1a1a;
       --border-active: #cc1111;
       --red:           #cc1111;
       --red-bright:    #ff2222;
       --red-dim:       #661111;
+      --red-glow:      rgba(204,17,17,0.18);
       --amber:         #e8a020;
       --green:         #22cc66;
+      --blue:          #4a90e2;
       --text-primary:  #f0f0f0;
       --text-secondary:#888888;
-      --text-muted:    #444444;
+      --text-muted:    #555555;
       --font-display:  'Bebas Neue', sans-serif;
       --font-body:     'Barlow', sans-serif;
       --font-mono:     'JetBrains Mono', monospace;
@@ -34,445 +38,561 @@
       font-family: var(--font-body);
       font-weight: 400;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
+      display: grid;
+      grid-template-rows: 56px 1fr 28px;
+      grid-template-columns: 260px 1fr 340px;
     }
 
-    /* ── SCANLINE OVERLAY ── */
+    /* Scanline overlay */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
       pointer-events: none;
       z-index: 9999;
     }
 
     /* ── HEADER ── */
     header {
+      grid-column: 1 / -1;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
-      height: 64px;
+      padding: 0 24px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-panel);
-      flex-shrink: 0;
     }
-
-    .logo {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-    }
-
+    .logo { display: flex; align-items: baseline; gap: 14px; }
     .logo-wordmark {
       font-family: var(--font-display);
-      font-size: 28px;
+      font-size: 26px;
       letter-spacing: 4px;
-      color: var(--text-primary);
     }
-
-    .logo-wordmark span {
-      color: var(--red);
-    }
-
+    .logo-wordmark span { color: var(--red); }
     .logo-tagline {
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 9px;
       color: var(--text-muted);
       letter-spacing: 2px;
       text-transform: uppercase;
     }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 24px;
+    .header-right { display: flex; align-items: center; gap: 20px; }
+    .header-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
-
+    .header-meta strong { color: var(--text-secondary); font-weight: 500; }
     .status-pill {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
       font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-secondary);
-      letter-spacing: 1px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
-
     .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: var(--text-muted);
-      transition: background 0.3s;
+      transition: background 0.2s;
     }
-
-    .status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-green 2s infinite; }
-    .status-dot.thinking { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulse-amber 0.8s infinite; }
-
-    @keyframes pulse-green  { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes pulse-amber  { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-    /* ── MAIN LAYOUT ── */
-    .layout {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    .status-pill.online .status-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-pill.offline .status-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
 
     /* ── SIDEBAR ── */
-    .sidebar {
-      width: 260px;
-      border-right: 1px solid var(--border);
+    aside.sidebar {
       background: var(--bg-panel);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
       overflow-y: auto;
     }
-
-    .sidebar-section {
-      padding: 20px 20px 8px;
-    }
-
     .sidebar-label {
       font-family: var(--font-mono);
       font-size: 9px;
-      letter-spacing: 3px;
+      letter-spacing: 2.5px;
       color: var(--text-muted);
       text-transform: uppercase;
       margin-bottom: 12px;
+      padding: 0 4px;
     }
+    .sidebar-section { margin-bottom: 24px; }
+    .divider { height: 1px; background: var(--border-soft); margin: 4px 0 24px; }
 
-    /* ── THREE HEADS ── */
+    /* Head cards */
     .head-card {
-      border: 1px solid var(--border);
-      border-radius: 4px;
+      position: relative;
       padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
       margin-bottom: 8px;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.18s;
     }
-
     .head-card::before {
       content: '';
       position: absolute;
       left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--red-dim);
-      transition: background 0.2s;
+      width: 2px;
+      background: var(--text-muted);
+      transition: all 0.18s;
     }
-
-    .head-card:hover { border-color: var(--red-dim); background: rgba(204,17,17,0.04); }
-    .head-card.active { border-color: var(--red); background: rgba(204,17,17,0.07); }
+    .head-card:hover { border-color: var(--red-dim); background: var(--bg-card-hi); }
+    .head-card:hover::before { background: var(--red-dim); }
+    .head-card.active { border-color: var(--red); background: var(--red-glow); }
     .head-card.active::before { background: var(--red); box-shadow: 0 0 8px var(--red); }
-
+    .head-card.thinking::before {
+      background: var(--red);
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; box-shadow: 0 0 10px var(--red); }
+    }
     .head-number {
       font-family: var(--font-mono);
       font-size: 9px;
-      color: var(--red-dim);
+      color: var(--text-muted);
       letter-spacing: 2px;
-      margin-bottom: 4px;
+      text-transform: uppercase;
     }
-
     .head-card.active .head-number { color: var(--red); }
-
     .head-name {
-      font-family: var(--font-body);
       font-weight: 600;
       font-size: 13px;
-      color: var(--text-primary);
-      margin-bottom: 2px;
+      margin-top: 3px;
     }
-
     .head-desc {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-secondary);
+      margin-top: 4px;
       line-height: 1.4;
     }
 
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 8px 0;
-    }
-
-    /* ── QUICK PROMPTS ── */
+    /* Quick prompts */
     .quick-prompt {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 11px;
+      padding: 8px 11px;
+      background: transparent;
+      border: 1px solid var(--border-soft);
+      border-radius: 2px;
+      font-size: 11.5px;
       color: var(--text-secondary);
       cursor: pointer;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       transition: all 0.15s;
-      line-height: 1.4;
     }
-
     .quick-prompt:hover {
       border-color: var(--red-dim);
       color: var(--text-primary);
-      background: rgba(204,17,17,0.04);
+      background: var(--bg-card);
+    }
+    .quick-prompt.flagship {
+      border-color: var(--red-dim);
+      color: var(--text-primary);
+      position: relative;
+    }
+    .quick-prompt.flagship::after {
+      content: '★';
+      position: absolute;
+      right: 8px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--red);
+      font-size: 9px;
     }
 
     /* ── CHAT AREA ── */
     .chat-area {
-      flex: 1;
       display: flex;
       flex-direction: column;
+      background: var(--bg-void);
       overflow: hidden;
     }
+    .chat-header {
+      padding: 14px 28px 0;
+      border-bottom: 1px solid transparent;
+    }
+    .breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .breadcrumb span { color: var(--red-bright); }
 
     .messages {
       flex: 1;
       overflow-y: auto;
-      padding: 28px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      scroll-behavior: smooth;
+      padding: 20px 28px 12px;
     }
-
-    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar { width: 6px; }
     .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ── EMPTY STATE ── */
+    /* Empty state with capability tiles */
     .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      opacity: 0.4;
+      max-width: 720px;
+      margin: 30px auto 0;
     }
-
     .empty-glyph {
       font-family: var(--font-display);
-      font-size: 80px;
+      font-size: 56px;
       letter-spacing: 8px;
-      color: var(--border-active);
-      line-height: 1;
-    }
-
-    .empty-text {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      letter-spacing: 3px;
       color: var(--text-muted);
-      text-transform: uppercase;
+      text-align: center;
     }
-
-    /* ── MESSAGE BUBBLES ── */
-    .message {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      animation: fadeSlideIn 0.25s ease;
-    }
-
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user { align-items: flex-end; }
-    .message.agent { align-items: flex-start; }
-
-    .message-meta {
+    .empty-glyph span { color: var(--red); }
+    .empty-tagline {
+      text-align: center;
       font-family: var(--font-mono);
       font-size: 10px;
       color: var(--text-muted);
-      letter-spacing: 1px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      margin-bottom: 36px;
     }
-
-    .message.user .message-meta { color: var(--red-dim); }
-
-    .bubble {
-      max-width: 72%;
-      padding: 14px 18px;
-      border-radius: 2px;
+    .empty-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .cap-tile {
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .cap-tile:hover {
+      border-color: var(--red-dim);
+      background: var(--bg-card-hi);
+      transform: translateY(-1px);
+    }
+    .cap-tile-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--red);
+    }
+    .cap-tile-title {
       font-size: 14px;
-      line-height: 1.65;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .cap-tile-example {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      font-style: italic;
+      line-height: 1.4;
     }
 
+    /* Messages */
+    .message { margin-bottom: 18px; max-width: 85%; }
+    .message.user { margin-left: auto; }
+    .message.agent { margin-right: auto; }
+    .message-meta {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      padding: 0 2px;
+    }
+    .message.user .message-meta { text-align: right; color: var(--text-secondary); }
+    .agent-chip {
+      display: inline-block;
+      padding: 2px 6px;
+      background: var(--red-glow);
+      color: var(--red-bright);
+      border-radius: 2px;
+      margin-left: 6px;
+      font-weight: 500;
+    }
+    .bubble {
+      padding: 12px 15px;
+      border-radius: 3px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     .message.user .bubble {
       background: var(--red);
-      color: #fff;
-      border-bottom-right-radius: 0;
+      color: white;
     }
-
     .message.agent .bubble {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      color: var(--text-primary);
-      border-bottom-left-radius: 0;
-      white-space: pre-wrap;
     }
-
-    .bubble strong { color: var(--red-bright); font-weight: 600; }
-    .bubble em { color: var(--amber); font-style: normal; }
-
-    /* ── TYPING INDICATOR ── */
-    .typing-bubble {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      padding: 14px 20px;
+    .message.agent .bubble strong { color: var(--text-primary); font-weight: 600; }
+    .message.agent .bubble em { color: var(--text-secondary); font-style: italic; }
+    .message.agent .bubble code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg-input);
+      padding: 1px 5px;
       border-radius: 2px;
-      border-bottom-left-radius: 0;
-      display: flex;
-      align-items: center;
-      gap: 5px;
     }
-
     .typing-dot {
+      display: inline-block;
       width: 6px; height: 6px;
+      background: var(--text-secondary);
       border-radius: 50%;
-      background: var(--red);
-      animation: typingBounce 1.2s infinite;
+      margin: 0 2px;
+      animation: typing 1.2s infinite;
     }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typingBounce {
-      0%,60%,100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-5px); opacity: 1; }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 0.3; }
+      30% { opacity: 1; }
     }
 
-    /* ── INPUT AREA ── */
+    .error-banner {
+      display: none;
+      padding: 10px 14px;
+      margin: 0 28px 14px;
+      background: rgba(204,17,17,0.1);
+      border: 1px solid var(--red-dim);
+      border-radius: 2px;
+      color: var(--red-bright);
+      font-size: 12px;
+    }
+
+    /* Input */
     .input-area {
+      padding: 14px 28px 20px;
       border-top: 1px solid var(--border);
-      padding: 20px 32px;
       background: var(--bg-panel);
-      flex-shrink: 0;
     }
-
-    .input-row {
-      display: flex;
-      gap: 12px;
-      align-items: flex-end;
-    }
-
+    .input-row { display: flex; gap: 10px; align-items: flex-end; }
     .input-wrap {
       flex: 1;
-      position: relative;
-    }
-
-    textarea {
-      width: 100%;
       background: var(--bg-input);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 3px;
+      transition: border-color 0.15s;
+    }
+    .input-wrap:focus-within { border-color: var(--red-dim); }
+    textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 11px 13px;
       color: var(--text-primary);
       font-family: var(--font-body);
-      font-size: 14px;
-      padding: 13px 16px;
-      resize: none;
-      outline: none;
-      transition: border-color 0.2s;
-      min-height: 48px;
-      max-height: 140px;
-      line-height: 1.5;
+      font-size: 13.5px;
+      max-height: 120px;
     }
-
-    textarea:focus { border-color: var(--red-dim); }
     textarea::placeholder { color: var(--text-muted); }
-
     .send-btn {
-      height: 48px;
-      width: 48px;
-      border-radius: 4px;
+      padding: 0 18px;
+      height: 42px;
       background: var(--red);
+      color: white;
       border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, transform 0.1s;
-      flex-shrink: 0;
-    }
-
-    .send-btn:hover { background: var(--red-bright); }
-    .send-btn:active { transform: scale(0.95); }
-    .send-btn:disabled { background: var(--red-dim); cursor: not-allowed; }
-
-    .send-btn svg { width: 18px; height: 18px; fill: white; }
-
-    .input-hint {
+      border-radius: 3px;
       font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 8px;
-      letter-spacing: 1px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
     }
-
-    /* ── SESSION INFO ── */
-    .session-bar {
-      padding: 8px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 16px;
-      margin-top: auto;
-    }
-
-    .session-item {
+    .send-btn:hover { background: var(--red-bright); }
+    .send-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+    .input-hint {
       font-family: var(--font-mono);
       font-size: 9px;
       color: var(--text-muted);
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 6px;
     }
 
-    .session-item span { color: var(--text-secondary); }
-
-    /* ── ERROR BANNER ── */
-    .error-banner {
-      background: rgba(204,17,17,0.1);
-      border: 1px solid var(--red-dim);
-      border-radius: 4px;
-      padding: 10px 16px;
-      font-size: 12px;
-      color: var(--red-bright);
+    /* ── INTEL PANEL (RIGHT) ── */
+    aside.intel-panel {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      padding: 20px 18px;
+      overflow-y: auto;
+    }
+    .intel-section { margin-bottom: 26px; }
+    .intel-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+    .intel-label {
       font-family: var(--font-mono);
-      display: none;
-      margin: 0 32px 12px;
+      font-size: 9px;
+      letter-spacing: 2.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .intel-asof {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
     }
 
-    .error-banner.visible { display: block; }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat {
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      position: relative;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 28px;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+    .stat-num.warn { color: var(--amber); }
+    .stat-num.crit { color: var(--red-bright); }
+    .stat-lbl {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .stat-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .risk-card {
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--text-muted);
+      border-radius: 2px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .risk-card:hover { background: var(--bg-card-hi); border-left-color: var(--red); }
+    .risk-card.high { border-left-color: var(--red-bright); }
+    .risk-card.med { border-left-color: var(--amber); }
+    .risk-card.low { border-left-color: var(--text-muted); }
+
+    .risk-name {
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .risk-tier {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .risk-tier.platinum { color: #c0c0c0; }
+    .risk-tier.gold { color: var(--amber); }
+    .risk-tier.silver { color: #a8a8a8; }
+
+    .risk-signals {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .signal {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      padding: 2px 5px;
+      background: var(--bg-input);
+      border-radius: 2px;
+      color: var(--text-secondary);
+    }
+    .signal.crit { color: var(--red-bright); background: rgba(204,17,17,0.1); }
+    .signal.warn { color: var(--amber); background: rgba(232,160,32,0.1); }
+
+    .risk-issue {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    /* ── FOOTER STATUS BAR ── */
+    .status-bar {
+      grid-column: 1 / -1;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .status-bar-section { display: flex; gap: 20px; align-items: center; }
+    .status-bar span { color: var(--text-secondary); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      body { grid-template-columns: 240px 1fr; }
+      aside.intel-panel { display: none; }
+    }
+    @media (max-width: 800px) {
+      body { grid-template-columns: 1fr; grid-template-rows: 56px 1fr 28px; }
+      aside.sidebar { display: none; }
+    }
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo">
-    <div class="logo-wordmark">Ce<span>RE</span>brus</div>
-    <div class="logo-tagline">Enterprise Retail Intelligence</div>
-  </div>
-  <div class="header-right">
-    <div class="status-pill">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusLabel">CONNECTING</span>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-wordmark">CE<span>RE</span>BRUS</div>
+      <div class="logo-tagline">Enterprise Retail Intelligence</div>
     </div>
-  </div>
-</header>
+    <div class="header-right">
+      <div class="header-meta">Reasoning <strong id="modelDisplay">gemini-3.1-pro</strong></div>
+      <div class="status-pill offline" id="statusPill">
+        <div class="status-dot"></div>
+        <span id="statusLabel">CONNECTING</span>
+      </div>
+    </div>
+  </header>
 
-<!-- LAYOUT -->
-<div class="layout">
-
-  <!-- SIDEBAR -->
+  <!-- LEFT SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-label">Three Heads</div>
@@ -500,51 +620,69 @@
 
     <div class="sidebar-section">
       <div class="sidebar-label">Quick Prompts</div>
-
-      <div class="quick-prompt" onclick="setQuickPrompt('Who are my top 3 churn-risk customers right now and why?')">
-        Top 3 churn-risk customers?
+      <div class="quick-prompt flagship" onclick="setQuickPrompt('Who are my top 3 churn-risk customers right now and why?')">
+        Top churn-risk customers
       </div>
-      <div class="quick-prompt" onclick="setQuickPrompt('Which high-LTV accounts have unresolved issues this week?')">
-        High-LTV accounts at risk?
+      <div class="quick-prompt flagship" onclick="setQuickPrompt('Which high-LTV accounts have unresolved issues this week?')">
+        High-LTV accounts at risk
       </div>
-      <div class="quick-prompt" onclick="setQuickPrompt('Top upsell candidates I should call today?')">
-        Top upsell candidates?
+      <div class="quick-prompt flagship" onclick="setQuickPrompt('Top upsell candidates I should call today?')">
+        Top upsell candidates
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What are the perks for Platinum tier members?')">
-        Platinum loyalty perks?
+        Platinum loyalty perks
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('Can we price match with Amazon?')">
-        Price match with Amazon?
+        Price match with Amazon
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('Brief me on customer 7710 before my support call')">
         Brief: customer 7710
       </div>
-      <div class="quick-prompt" onclick="setQuickPrompt('Pull up customer 1105')">
-        Profile: customer 1105
-      </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What is our same-day delivery coverage?')">
-        Same-day delivery policy?
+        Same-day delivery policy
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What triggers an automatic inventory reorder?')">
-        Inventory reorder triggers?
+        Inventory reorder triggers
       </div>
-    </div>
-
-    <div class="session-bar">
-      <div class="session-item">SESSION <span id="sessionDisplay">—</span></div>
     </div>
   </aside>
 
-  <!-- CHAT -->
-  <div class="chat-area">
+  <!-- CENTER CHAT -->
+  <main class="chat-area">
+    <div class="chat-header">
+      <div class="breadcrumb" id="breadcrumb">CEREBRUS / <span id="activeAgent">ORCHESTRATOR</span></div>
+    </div>
+
     <div class="error-banner" id="errorBanner">
       ⚠ Could not reach CeREbrus backend. Make sure <code>adk web</code> is running on port 8000.
     </div>
 
     <div class="messages" id="messages">
       <div class="empty-state" id="emptyState">
-        <div class="empty-glyph">CRB</div>
-        <div class="empty-text">Three heads. One source of truth.</div>
+        <div class="empty-glyph">C<span>RE</span>B</div>
+        <div class="empty-tagline">Three heads · One source of truth</div>
+        <div class="empty-grid">
+          <div class="cap-tile" onclick="setQuickPrompt('Who are my top 3 churn-risk customers right now and why?')">
+            <div class="cap-tile-label">Portfolio Synthesis</div>
+            <div class="cap-tile-title">Cross-customer reasoning</div>
+            <div class="cap-tile-example">"Who's at churn risk and why?"</div>
+          </div>
+          <div class="cap-tile" onclick="setQuickPrompt('Brief me on customer 4821 before my support call')">
+            <div class="cap-tile-label">Pre-Call Brief</div>
+            <div class="cap-tile-title">Single-customer prep</div>
+            <div class="cap-tile-example">"Brief me on customer 4821"</div>
+          </div>
+          <div class="cap-tile" onclick="setQuickPrompt('What are the perks for Platinum tier members?')">
+            <div class="cap-tile-label">Knowledge RAG</div>
+            <div class="cap-tile-title">Semantic policy search</div>
+            <div class="cap-tile-example">"Platinum tier perks?"</div>
+          </div>
+          <div class="cap-tile" onclick="setQuickPrompt('Pull up customer 1105')">
+            <div class="cap-tile-label">Customer Intel</div>
+            <div class="cap-tile-title">Profile lookup</div>
+            <div class="cap-tile-example">"Pull up customer 1105"</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -553,32 +691,80 @@
         <div class="input-wrap">
           <textarea
             id="inputBox"
-            placeholder="Ask a policy question or enter a customer ID..."
+            placeholder="Ask anything — a policy, a customer ID, or who's at risk this week…"
             rows="1"
             onkeydown="handleKey(event)"
             oninput="autoResize(this)"
           ></textarea>
         </div>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
-        </button>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">SEND</button>
       </div>
       <div class="input-hint">ENTER to send · SHIFT+ENTER for new line</div>
     </div>
+  </main>
+
+  <!-- RIGHT INTEL PANEL -->
+  <aside class="intel-panel">
+    <div class="intel-section">
+      <div class="intel-section-header">
+        <div class="intel-label">Portfolio Pulse</div>
+        <div class="intel-asof" id="intelAsof">—</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-num" id="statCustomers">—</div>
+          <div class="stat-lbl">Customers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statLtv">—</div>
+          <div class="stat-lbl">Total LTV</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statTickets">—</div>
+          <div class="stat-lbl">Open Tickets</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="statEsc">—</div>
+          <div class="stat-lbl">Escalations</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intel-section">
+      <div class="intel-section-header">
+        <div class="intel-label">Top Risk Accounts</div>
+      </div>
+      <div id="riskCards">
+        <div class="risk-card low">
+          <div class="risk-name">Loading…</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FOOTER STATUS -->
+  <div class="status-bar">
+    <div class="status-bar-section">
+      <div>SESSION <span id="sessionDisplay">—</span></div>
+      <div>USER <span id="userDisplay">—</span></div>
+    </div>
+    <div class="status-bar-section">
+      <div>ADK <span>:8000</span></div>
+      <div>UI <span>:8080</span></div>
+      <div>EMBED <span>gemini-embedding-001</span></div>
+    </div>
   </div>
 
-</div>
-
 <script>
-  // ─── CONFIG ───────────────────────────────────────────────
-  const BASE_URL   = 'http://localhost:8000';
-  const APP_NAME   = 'cerebrus';
-  const USER_ID    = 'user_' + Math.random().toString(36).slice(2, 8);
+  const BASE_URL = 'http://localhost:8000';
+  const APP_NAME = 'cerebrus';
+  const USER_ID  = 'user_' + Math.random().toString(36).slice(2, 8);
+  document.getElementById('userDisplay').textContent = USER_ID.slice(5).toUpperCase();
 
   let sessionId  = null;
   let isThinking = false;
 
-  // ─── SESSION INIT ─────────────────────────────────────────
+  // ─── SESSION INIT ───
   async function initSession() {
     try {
       const res = await fetch(`${BASE_URL}/apps/${APP_NAME}/users/${USER_ID}/sessions`, {
@@ -597,12 +783,96 @@
     }
   }
 
-  // ─── SEND MESSAGE ─────────────────────────────────────────
+  // ─── PORTFOLIO PANEL ───
+  async function loadIntelPanel() {
+    try {
+      const res = await fetch('portfolio_snapshot.json?_=' + Date.now());
+      if (!res.ok) throw new Error('snapshot missing');
+      const data = await res.json();
+      renderStats(data);
+      renderRiskCards(data);
+    } catch (e) {
+      document.getElementById('riskCards').innerHTML =
+        '<div class="risk-card"><div class="risk-name">Snapshot unavailable</div><div class="risk-issue">Restart adk web to regenerate.</div></div>';
+    }
+  }
+
+  function fmtMoney(n) {
+    if (n >= 1_000_000) return '$' + (n/1_000_000).toFixed(1) + 'M';
+    if (n >= 1_000)     return '$' + (n/1_000).toFixed(1) + 'K';
+    return '$' + Math.round(n);
+  }
+
+  function renderStats(d) {
+    document.getElementById('intelAsof').textContent = 'AS OF ' + (d.as_of || '—');
+    document.getElementById('statCustomers').textContent = d.total_customers ?? '—';
+    document.getElementById('statLtv').textContent       = fmtMoney(d.total_lifetime_value || 0);
+    const tix = d.customers_with_open_tickets ?? 0;
+    const esc = d.customers_with_escalations  ?? 0;
+    const tixEl = document.getElementById('statTickets');
+    const escEl = document.getElementById('statEsc');
+    tixEl.textContent = tix;
+    escEl.textContent = esc;
+    tixEl.className = 'stat-num' + (tix >= 4 ? ' warn' : '');
+    escEl.className = 'stat-num' + (esc >= 1 ? ' crit' : '');
+  }
+
+  function riskScore(c) {
+    return (c.escalated_tickets || 0) * 5
+         + (c.open_ticket_count || 0) * 2
+         + Math.min((c.oldest_open_ticket_days || 0) / 5, 8)
+         + (/frustrated|prevent churn|escalat/i.test(c.rep_notes || '') ? 3 : 0);
+  }
+
+  function riskBand(score) {
+    if (score >= 8) return 'high';
+    if (score >= 4) return 'med';
+    return 'low';
+  }
+
+  function renderRiskCards(d) {
+    const ranked = (d.portfolio || [])
+      .map(c => ({ c, score: riskScore(c) }))
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+
+    const container = document.getElementById('riskCards');
+    if (ranked.length === 0) {
+      container.innerHTML = '<div class="risk-card"><div class="risk-name">No active risks</div></div>';
+      return;
+    }
+
+    container.innerHTML = ranked.map(({ c, score }) => {
+      const band = riskBand(score);
+      const tierLower = (c.tier || '').toLowerCase();
+      const signals = [];
+      if (c.escalated_tickets > 0) signals.push(`<span class="signal crit">${c.escalated_tickets} ESC</span>`);
+      if (c.open_ticket_count > 0) signals.push(`<span class="signal">${c.open_ticket_count} OPEN</span>`);
+      if (c.oldest_open_ticket_days > 7)
+        signals.push(`<span class="signal ${c.oldest_open_ticket_days > 14 ? 'crit' : 'warn'}">${c.oldest_open_ticket_days}d AGE</span>`);
+      signals.push(`<span class="signal">${fmtMoney(c.lifetime_value)} LTV</span>`);
+
+      const issue = (c.ticket_topics || [])[0] || c.rep_notes || '';
+      const issueShort = issue.length > 90 ? issue.slice(0, 87) + '…' : issue;
+
+      return `
+        <div class="risk-card ${band}" onclick="setQuickPrompt('Brief me on customer ${c.customer_id} before my support call')">
+          <div class="risk-name">
+            ${c.name}
+            <span class="risk-tier ${tierLower}">${c.tier}</span>
+          </div>
+          <div class="risk-signals">${signals.join('')}</div>
+          <div class="risk-issue">${issueShort}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── SEND MESSAGE ───
   async function sendMessage() {
     const input = document.getElementById('inputBox');
     const text  = input.value.trim();
     if (!text || isThinking) return;
-
     if (!sessionId) { await initSession(); if (!sessionId) return; }
 
     hideError();
@@ -613,59 +883,70 @@
     setThinking(true);
 
     const typingId = appendTyping();
+    const t0 = performance.now();
 
     try {
-      const res = await fetch(
-        `${BASE_URL}/run`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            app_name: APP_NAME,
-            user_id: USER_ID,
-            session_id: sessionId,
-            new_message: { role: 'user', parts: [{ text }] }
-          })
-        }
-      );
+      const res = await fetch(`${BASE_URL}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          app_name: APP_NAME, user_id: USER_ID, session_id: sessionId,
+          new_message: { role: 'user', parts: [{ text }] }
+        })
+      });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const events = await res.json();
-
       removeTyping(typingId);
 
-      // Extract final text response from events
       let reply = '';
+      let answeringAgent = null;
       for (const event of events) {
-        const parts = event?.content?.parts;
-        if (parts) {
-          for (const part of parts) {
-            if (part.text) reply += part.text;
-          }
+        if (!answeringAgent && event?.author && event.author !== 'cerebrus_orchestrator') {
+          answeringAgent = event.author;
         }
+        const parts = event?.content?.parts;
+        if (parts) for (const p of parts) if (p.text) reply += p.text;
       }
 
+      const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+      const agentLabel = friendlyAgent(answeringAgent);
       if (reply.trim()) {
-        appendMessage('agent', reply.trim());
-        highlightActiveHead(reply);
+        appendMessage('agent', reply.trim(), agentLabel, elapsed);
+        if (agentLabel) document.getElementById('activeAgent').textContent = agentLabel.toUpperCase();
+        highlightActiveHead(answeringAgent);
       } else {
         appendMessage('agent', 'No response returned. Please try again.');
       }
-
     } catch (e) {
       removeTyping(typingId);
-      showError();
-      appendMessage('agent', '⚠ Connection error. Make sure the CeREbrus backend is running:\n\nadk web "C:\\Users\\sergi\\Desktop"');
+      appendMessage('agent', '⚠ Connection error. Make sure adk web is running on port 8000.');
+      setStatus('offline', 'OFFLINE');
+    } finally {
+      setThinking(false);
     }
-
-    setThinking(false);
   }
 
-  // ─── UI HELPERS ───────────────────────────────────────────
+  function friendlyAgent(name) {
+    if (!name) return null;
+    if (name.includes('knowledge')) return 'Knowledge Guardian';
+    if (name.includes('customer_intel')) return 'Customer Intel';
+    if (name.includes('summary')) return 'Synthesis';
+    if (name.includes('orchestrator')) return 'Orchestrator';
+    return name;
+  }
+
+  function highlightActiveHead(name) {
+    document.querySelectorAll('.head-card').forEach(c => c.classList.remove('active'));
+    if (!name) return;
+    if (name.includes('knowledge')) document.getElementById('head1').classList.add('active');
+    else if (name.includes('customer_intel')) document.getElementById('head2').classList.add('active');
+    else if (name.includes('summary')) document.getElementById('head3').classList.add('active');
+  }
+
+  // ─── RENDERING ───
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
   function renderMarkdown(text) {
@@ -677,22 +958,23 @@
     return html;
   }
 
-  function appendMessage(role, text) {
+  function appendMessage(role, text, agentLabel, elapsed) {
     const messages = document.getElementById('messages');
     const div = document.createElement('div');
     div.className = `message ${role}`;
 
     const meta = document.createElement('div');
     meta.className = 'message-meta';
-    meta.textContent = role === 'user' ? 'YOU' : 'CeREbrus';
+    if (role === 'user') {
+      meta.textContent = 'YOU';
+    } else {
+      meta.innerHTML = 'CeREbrus' + (agentLabel ? ` <span class="agent-chip">${escapeHtml(agentLabel)}${elapsed ? ' · ' + elapsed + 's' : ''}</span>` : '');
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    if (role === 'agent') {
-      bubble.innerHTML = renderMarkdown(text);
-    } else {
-      bubble.textContent = text;
-    }
+    if (role === 'agent') bubble.innerHTML = renderMarkdown(text);
+    else bubble.textContent = text;
 
     div.appendChild(meta);
     div.appendChild(bubble);
@@ -707,60 +989,46 @@
     const div = document.createElement('div');
     div.className = 'message agent';
     div.id = id;
-
     const meta = document.createElement('div');
     meta.className = 'message-meta';
     meta.textContent = 'CeREbrus';
-
     const bubble = document.createElement('div');
-    bubble.className = 'typing-bubble';
+    bubble.className = 'bubble';
     bubble.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-
-    div.appendChild(meta);
-    div.appendChild(bubble);
+    div.appendChild(meta); div.appendChild(bubble);
     messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
     return id;
   }
+  function removeTyping(id) { const el = document.getElementById(id); if (el) el.remove(); }
 
-  function removeTyping(id) {
-    const el = document.getElementById(id);
+  // ─── UI HELPERS ───
+  function setStatus(state, label) {
+    const pill = document.getElementById('statusPill');
+    pill.className = 'status-pill ' + state;
+    document.getElementById('statusLabel').textContent = label;
+  }
+  function showError() { document.getElementById('errorBanner').style.display = 'block'; }
+  function hideError() { document.getElementById('errorBanner').style.display = 'none'; }
+  function hideEmpty() {
+    const el = document.getElementById('emptyState');
     if (el) el.remove();
   }
-
-  function hideEmpty() {
-    const e = document.getElementById('emptyState');
-    if (e) e.remove();
+  function setThinking(on) {
+    isThinking = on;
+    document.getElementById('sendBtn').disabled = on;
+    document.querySelectorAll('.head-card').forEach(c => c.classList.toggle('thinking', on));
   }
-
-  function setThinking(val) {
-    isThinking = val;
-    document.getElementById('sendBtn').disabled = val;
-    setStatus(val ? 'thinking' : 'online', val ? 'THINKING' : 'ONLINE');
-  }
-
-  function setStatus(type, label) {
-    const dot   = document.getElementById('statusDot');
-    const lbl   = document.getElementById('statusLabel');
-    dot.className = 'status-dot ' + (type === 'online' ? 'online' : type === 'thinking' ? 'thinking' : '');
-    lbl.textContent = label;
-  }
-
-  function showError() { document.getElementById('errorBanner').classList.add('visible'); }
-  function hideError() { document.getElementById('errorBanner').classList.remove('visible'); }
-
   function setQuickPrompt(text) {
     const input = document.getElementById('inputBox');
     input.value = text;
     autoResize(input);
     input.focus();
   }
-
   function autoResize(el) {
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
   }
-
   function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -768,26 +1036,10 @@
     }
   }
 
-  function highlightActiveHead(reply) {
-    const r = reply.toLowerCase();
-    document.getElementById('head1').classList.remove('active');
-    document.getElementById('head2').classList.remove('active');
-    document.getElementById('head3').classList.remove('active');
-
-    // Portfolio synthesis hits first — wins over single-customer matches
-    if (r.includes('top 3') || r.includes('top three') || r.includes('churn') || r.includes('upsell candidate') || r.includes('portfolio') || r.includes('at-risk') || r.includes('at risk') || r.includes('next action')) {
-      document.getElementById('head3').classList.add('active');
-    } else if (r.includes('brief') || r.includes('snapshot') || r.includes('approach') || r.includes('recommended next')) {
-      document.getElementById('head3').classList.add('active');
-    } else if (r.includes('customer') || r.includes('ticket') || r.includes('purchase') || r.includes('ltv') || r.includes('tier')) {
-      document.getElementById('head2').classList.add('active');
-    } else if (r.includes('policy') || r.includes('return') || r.includes('vendor') || r.includes('compliance') || r.includes('shipping')) {
-      document.getElementById('head1').classList.add('active');
-    }
-  }
-
-  // ─── BOOT ─────────────────────────────────────────────────
+  // ─── BOOT ───
   initSession();
+  loadIntelPanel();
 </script>
+
 </body>
 </html>

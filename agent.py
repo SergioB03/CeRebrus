@@ -604,6 +604,29 @@ summary_agent = LlmAgent(
 # ORCHESTRATOR — THE GATE
 # ─────────────────────────────────────────────
 
+def write_portfolio_snapshot(path: str = None) -> str:
+    """Write the portfolio data to JSON for the dashboard UI to load on init."""
+    import json
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), "portfolio_snapshot.json")
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(analyze_customer_portfolio(), f, indent=2, default=str)
+    return path
+
+
+# Also runs as a side-effect of import, so ADK web regenerates snapshot
+# whenever it (lazy) imports the agent — typically on first chat request.
+try:
+    write_portfolio_snapshot()
+except Exception:
+    pass
+
+
+if __name__ == "__main__":
+    p = write_portfolio_snapshot()
+    print(f"Wrote portfolio snapshot: {p}")
+
+
 root_agent = LlmAgent(
     name="cerebrus_orchestrator",
     model=MODEL_REASONING,
