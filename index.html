@@ -480,7 +480,7 @@
       <div class="head-card" id="head1" onclick="setQuickPrompt('What is our return policy for electronics?')">
         <div class="head-number">HEAD 01</div>
         <div class="head-name">Knowledge Guardian</div>
-        <div class="head-desc">Policies · SOPs · Vendor contracts · Compliance</div>
+        <div class="head-desc">Semantic RAG · Policies · SOPs · Vendor contracts · Compliance</div>
       </div>
 
       <div class="head-card" id="head2" onclick="setQuickPrompt('Pull up customer 4821')">
@@ -489,10 +489,10 @@
         <div class="head-desc">Profiles · Purchase history · Tickets · Tier status</div>
       </div>
 
-      <div class="head-card" id="head3" onclick="setQuickPrompt('Brief me on customer 5590 before my support call')">
+      <div class="head-card" id="head3" onclick="setQuickPrompt('Who are my top 3 churn-risk customers right now and why?')">
         <div class="head-number">HEAD 03</div>
         <div class="head-name">Synthesis</div>
-        <div class="head-desc">Pre-call briefs · Cross-source intelligence</div>
+        <div class="head-desc">Pre-call briefs · Portfolio risk analysis · Cross-source intelligence</div>
       </div>
     </div>
 
@@ -501,6 +501,15 @@
     <div class="sidebar-section">
       <div class="sidebar-label">Quick Prompts</div>
 
+      <div class="quick-prompt" onclick="setQuickPrompt('Who are my top 3 churn-risk customers right now and why?')">
+        Top 3 churn-risk customers?
+      </div>
+      <div class="quick-prompt" onclick="setQuickPrompt('Which high-LTV accounts have unresolved issues this week?')">
+        High-LTV accounts at risk?
+      </div>
+      <div class="quick-prompt" onclick="setQuickPrompt('Top upsell candidates I should call today?')">
+        Top upsell candidates?
+      </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What are the perks for Platinum tier members?')">
         Platinum loyalty perks?
       </div>
@@ -515,9 +524,6 @@
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What is our same-day delivery coverage?')">
         Same-day delivery policy?
-      </div>
-      <div class="quick-prompt" onclick="setQuickPrompt('Brief me on customer 3388 before my support call')">
-        Brief: customer 3388
       </div>
       <div class="quick-prompt" onclick="setQuickPrompt('What triggers an automatic inventory reorder?')">
         Inventory reorder triggers?
@@ -768,12 +774,15 @@
     document.getElementById('head2').classList.remove('active');
     document.getElementById('head3').classList.remove('active');
 
-    if (r.includes('policy') || r.includes('return') || r.includes('vendor') || r.includes('compliance') || r.includes('shipping')) {
-      document.getElementById('head1').classList.add('active');
+    // Portfolio synthesis hits first — wins over single-customer matches
+    if (r.includes('top 3') || r.includes('top three') || r.includes('churn') || r.includes('upsell candidate') || r.includes('portfolio') || r.includes('at-risk') || r.includes('at risk') || r.includes('next action')) {
+      document.getElementById('head3').classList.add('active');
+    } else if (r.includes('brief') || r.includes('snapshot') || r.includes('approach') || r.includes('recommended next')) {
+      document.getElementById('head3').classList.add('active');
     } else if (r.includes('customer') || r.includes('ticket') || r.includes('purchase') || r.includes('ltv') || r.includes('tier')) {
       document.getElementById('head2').classList.add('active');
-    } else if (r.includes('brief') || r.includes('snapshot') || r.includes('approach') || r.includes('recommended')) {
-      document.getElementById('head3').classList.add('active');
+    } else if (r.includes('policy') || r.includes('return') || r.includes('vendor') || r.includes('compliance') || r.includes('shipping')) {
+      document.getElementById('head1').classList.add('active');
     }
   }
 
