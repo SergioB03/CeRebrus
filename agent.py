@@ -15,10 +15,43 @@ Architecture:
 
 import os
 from datetime import datetime
+import numpy as np
 from dotenv import load_dotenv
+from google import genai
 from google.adk.agents import LlmAgent
 
 load_dotenv()
+
+EMBEDDING_MODEL = "gemini-embedding-001"
+RAG_MIN_SIMILARITY = 0.55
+
+_genai_client = None
+_doc_embeddings_cache = None
+
+
+def _genai():
+    global _genai_client
+    if _genai_client is None:
+        _genai_client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+    return _genai_client
+
+
+def _embed(texts: list[str]) -> np.ndarray:
+    result = _genai().models.embed_content(model=EMBEDDING_MODEL, contents=texts)
+    return np.array([e.values for e in result.embeddings])
+
+
+def _doc_embeddings() -> tuple[list[str], np.ndarray]:
+    """Lazy-init policy doc embeddings; cached for the lifetime of the process."""
+    global _doc_embeddings_cache
+    if _doc_embeddings_cache is None:
+        keys = list(POLICY_DOCS.keys())
+        texts = [
+            f"{POLICY_DOCS[k]['title']}. {POLICY_DOCS[k]['content']}"
+            for k in keys
+        ]
+        _doc_embeddings_cache = (keys, _embed(texts))
+    return _doc_embeddings_cache
 
 # ─────────────────────────────────────────────
 # MOCK DATA LAYER
@@ -284,38 +317,31 @@ CUSTOMER_DB = {
 
 def search_knowledge_base(query: str) -> dict:
     """
-    Searches internal enterprise knowledge base for policies,
-    SOPs, vendor contracts, and compliance docs.
+    Semantic search across the enterprise knowledge base using
+    Gemini embeddings (gemini-embedding-001) + cosine similarity.
+
+    Doc embeddings are computed once on first call and cached for the
+    process lifetime; per-query cost is one embedding API call.
 
     Args:
         query: Natural language question from an employee
 
     Returns:
-        Matching document title, relevant content, and last updated date
+        Matching document with similarity score, or a no-match response
+        if no doc clears the similarity threshold.
     """
-    q = query.lower()
+    keys, doc_emb = _doc_embeddings()
+    q_emb = _embed([query])[0]
 
-    # Keyword routing — in production this is a vector similarity search
-    if any(w in q for w in ["return", "refund", "exchange", "promo", "promotional", "black friday", "clearance"]):
-        doc = POLICY_DOCS["return_policy"]
-    elif any(w in q for w in ["loyalty", "rewards", "points", "tier", "platinum", "gold", "silver", "membership", "perks"]):
-        doc = POLICY_DOCS["loyalty_program"]
-    elif any(w in q for w in ["price match", "competitor", "beat", "lower price"]):
-        doc = POLICY_DOCS["price_match"]
-    elif any(w in q for w in ["vendor", "supplier", "contract", "techsupply", "renewal", "penalty", "net-30"]):
-        doc = POLICY_DOCS["vendor_terms"]
-    elif any(w in q for w in ["inventory", "reorder", "stock", "replenish", "shrinkage", "markdown", "dead stock"]):
-        doc = POLICY_DOCS["inventory_policy"]
-    elif any(w in q for w in ["ship", "shipping", "delivery", "fulfillment", "bopis", "pickup", "transit"]):
-        doc = POLICY_DOCS["shipping_fulfillment"]
-    elif any(w in q for w in ["escalat", "supervisor", "manager", "complaint", "override", "goodwill", "sop"]):
-        doc = POLICY_DOCS["employee_escalation"]
-    elif any(w in q for w in ["privacy", "pci", "gdpr", "ccpa", "compliance", "data", "credit card", "breach"]):
-        doc = POLICY_DOCS["compliance"]
-    else:
+    sims = doc_emb @ q_emb / (np.linalg.norm(doc_emb, axis=1) * np.linalg.norm(q_emb))
+    top_idx = int(np.argmax(sims))
+    top_sim = float(sims[top_idx])
+
+    if top_sim < RAG_MIN_SIMILARITY:
         return {
             "found": False,
-            "message": "No matching policy found. Try rephrasing or contact your ops manager.",
+            "message": "No matching policy found (semantic similarity below threshold). Try rephrasing or contact your ops manager.",
+            "best_match_score": round(top_sim, 3),
             "suggestion": (
                 "Available topics: returns & refunds, loyalty program, price matching, "
                 "vendor contracts, inventory management, shipping & fulfillment, "
@@ -323,12 +349,14 @@ def search_knowledge_base(query: str) -> dict:
             )
         }
 
+    doc = POLICY_DOCS[keys[top_idx]]
     return {
         "found": True,
         "document": doc["title"],
         "content": doc["content"],
         "last_updated": doc["last_updated"],
-        "source": "CeREbrus Internal Knowledge Base"
+        "source": "CeREbrus Internal Knowledge Base (semantic search)",
+        "match_score": round(top_sim, 3),
     }
 
 
